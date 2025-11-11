@@ -8,7 +8,6 @@
     "ClientSideMerchantMixin",
     "MerchantContainerMixin",
     "MerchantMenuMixin",
-    "ServerPlayerMixin",
     "TradeCyclingMixin",
     "VillagerMixin"
   ],

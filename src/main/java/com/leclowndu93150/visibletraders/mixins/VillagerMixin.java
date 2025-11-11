@@ -1,5 +1,6 @@
 package com.leclowndu93150.visibletraders.mixins;
 
+import com.leclowndu93150.visibletraders.VisibleTraders;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.chat.Component;
@@ -18,7 +19,6 @@ import net.minecraft.world.inventory.MerchantMenu;
 import net.minecraft.world.item.trading.MerchantOffer;
 import net.minecraft.world.item.trading.MerchantOffers;
 import net.minecraft.world.level.Level;
-import com.leclowndu93150.visibletraders.ServerPlayerDuck;
 import com.leclowndu93150.visibletraders.VillagerDuck;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.slf4j.Logger;
@@ -41,7 +41,8 @@ public abstract class VillagerMixin extends AbstractVillager implements Reputati
 
     @Shadow public abstract void setVillagerData(@NonNull VillagerData villagerData);
 
-    @Shadow public abstract void updateTrades();
+    @Shadow
+    protected abstract void updateTrades();
 
     @Shadow public abstract void onReputationEventFrom(@NonNull ReputationEventType reputationEventType, @NonNull Entity entity);
 
@@ -203,7 +204,7 @@ public abstract class VillagerMixin extends AbstractVillager implements Reputati
         OptionalInt containerID = player.openMenu(new SimpleMenuProvider((syncId, playerInventory, playerx) -> new MerchantMenu(syncId, playerInventory, this), displayName));
 
         if (containerID.isPresent() && player instanceof ServerPlayer serverPlayer) {
-            ((ServerPlayerDuck)serverPlayer).visibleTraders$wrapAndSendMerchantOffers(this, containerID.getAsInt(), this.getOffers(),
+            VisibleTraders.visibleTraders$wrapAndSendMerchantOffers(serverPlayer,this, containerID.getAsInt(), this.getOffers(),
                     level, this.getVillagerXp(), this.showProgressBar(), this.canRestock());
         }
     }
@@ -212,8 +213,7 @@ public abstract class VillagerMixin extends AbstractVillager implements Reputati
             method = "startTrading",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/world/entity/npc/Villager;openTradingScreen(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/network/chat/Component;I)V",
-                    shift = At.Shift.BEFORE
+                    target = "Lnet/minecraft/world/entity/npc/Villager;openTradingScreen(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/network/chat/Component;I)V"
             )
     )
     private void beforeOpenTrading(Player player, CallbackInfo ci) {

@@ -72,8 +72,8 @@ minecraft {
     runs {
         // applies to all the run configs below
         configureEach {
-            workingDirectory project.file('run')
 
+            workingDirectory project.file('run')
             // Recommended logging data for a userdev environment
             // The markers can be added/remove as needed separated by commas.
             // "SCAN": For mods scan.
@@ -95,6 +95,11 @@ minecraft {
         }
 
         client {
+
+            properties 'mixin.env.remapRefMap': 'true'
+            property 'mixin.env.refMapRemappingFile', "${project.projectDir}/build/createSrgToMcp/output.srg"
+            arg "-mixin.config="+mod_id+".mixins.json"
+
             // Comma-separated list of namespaces to load gametests from. Empty = all namespaces.
             property 'forge.enabledGameTestNamespaces', mod_id
         }
@@ -123,7 +128,6 @@ minecraft {
 
 mixin {
     add sourceSets.main, "${mod_id}.refmap.json"
-
     config "${mod_id}.mixins.json"
 }
 
@@ -143,7 +147,7 @@ dependencies {
     // If the group id is "net.minecraft" and the artifact id is one of ["client", "server", "joined"],
     // then special handling is done to allow a setup of a vanilla dependency without the use of an external repository.
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
-    implementation "curse.maven:trade-cycling-570431:5793975"
+    implementation fg.deobf("curse.maven:trade-cycling-570431:5793975")
     compileOnly(annotationProcessor("io.github.llamalad7:mixinextras-common:0.4.1"))
     implementation(jarJar("io.github.llamalad7:mixinextras-forge:0.4.1")) {
         jarJar.ranged(it, "[0.4.1,)")
