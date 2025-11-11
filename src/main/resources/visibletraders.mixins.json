@@ -1,0 +1,21 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.leclowndu93150.visibletraders.mixins",
+  "compatibilityLevel": "JAVA_17",
+  "refmap": "visibletraders.refmap.json",
+  "mixins": [
+    "ClientSideMerchantMixin",
+    "MerchantContainerMixin",
+    "MerchantMenuMixin",
+    "ServerPlayerMixin",
+    "TradeCyclingMixin",
+    "VillagerMixin"
+  ],
+  "client": [
+    "MerchantScreenMixinClient"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

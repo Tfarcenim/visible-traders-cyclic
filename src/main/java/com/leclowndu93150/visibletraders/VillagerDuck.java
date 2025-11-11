@@ -1,0 +1,13 @@
+package com.leclowndu93150.visibletraders;
+
+import net.minecraft.world.item.trading.MerchantOffers;
+
+public interface VillagerDuck {
+
+    int visibleTraders$getAvailableOffersCount();
+
+    MerchantOffers visibleTraders$getLockedOffers();
+
+    @SuppressWarnings("unused")
+    void visibleTraders$forceTradeGeneration();
+}
