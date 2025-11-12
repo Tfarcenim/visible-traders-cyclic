@@ -3,17 +3,14 @@ package com.leclowndu93150.visibletraders.mixins;
 import com.leclowndu93150.visibletraders.VisibleTraders;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.SimpleMenuProvider;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.ReputationEventHandler;
-import net.minecraft.world.entity.ai.village.ReputationEventType;
 import net.minecraft.world.entity.npc.AbstractVillager;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.npc.VillagerData;
-import net.minecraft.world.entity.npc.VillagerDataHolder;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.MerchantMenu;
 import net.minecraft.world.item.trading.MerchantOffer;
@@ -21,8 +18,6 @@ import net.minecraft.world.item.trading.MerchantOffers;
 import net.minecraft.world.level.Level;
 import com.leclowndu93150.visibletraders.VillagerDuck;
 import org.checkerframework.checker.nullness.qual.NonNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -35,7 +30,7 @@ import java.util.List;
 import java.util.OptionalInt;
 
 @Mixin(Villager.class)
-public abstract class VillagerMixin extends AbstractVillager implements ReputationEventHandler, VillagerDataHolder, VillagerDuck {
+public abstract class VillagerMixin extends AbstractVillager implements VillagerDuck {
 
     @Shadow public abstract @NonNull VillagerData getVillagerData();
 
@@ -44,19 +39,14 @@ public abstract class VillagerMixin extends AbstractVillager implements Reputati
     @Shadow
     protected abstract void updateTrades();
 
-    @Shadow public abstract void onReputationEventFrom(@NonNull ReputationEventType reputationEventType, @NonNull Entity entity);
+    @Unique
+    private List<MerchantOffers> visibleTraders$lockedOffers = null;
 
     @Unique
-    private static final Logger visibleTraders_NeoForge$visibleTradersLogger = LoggerFactory.getLogger("Visible Traders");
+    private MerchantOffer visibleTraders$cachedTrade = null;
 
     @Unique
-    private List<MerchantOffers> visibleTraders_NeoForge$lockedOffers = null;
-
-    @Unique
-    private MerchantOffer visibleTraders_NeoForge$cachedTrade = null;
-
-    @Unique
-    private int visibleTraders_NeoForge$prevLevel = 0;
+    private int visibleTraders$prevLevel = 0;
 
     public VillagerMixin(EntityType<? extends AbstractVillager> entityType, Level level) {
         super(entityType, level);
@@ -64,52 +54,52 @@ public abstract class VillagerMixin extends AbstractVillager implements Reputati
 
     @Inject(method = "addAdditionalSaveData", at = @At("HEAD"))
     private void writeOfferingLevel(CompoundTag compoundTag, CallbackInfo ci) {
-        if(this.visibleTraders_NeoForge$lockedOffers == null) return;
+        if(this.visibleTraders$lockedOffers == null) return;
 
         ListTag lockedOffersTag = new ListTag();
-        for(MerchantOffers offers : this.visibleTraders_NeoForge$lockedOffers) {
+        for(MerchantOffers offers : this.visibleTraders$lockedOffers) {
             CompoundTag offerTag = offers.createTag();
             lockedOffersTag.add(offerTag);
         }
-        compoundTag.put("LockedOffers", lockedOffersTag);
+        compoundTag.put(VisibleTraders.LOCKED_OFFERS, lockedOffersTag);
     }
 
     @Unique
-    private void visibleTraders_NeoForge$lockedTradesTick() {
+    private void visibleTraders$lockedTradesTick() {
         int level = this.getVillagerData().getLevel();
-        visibleTraders_NeoForge$prevLevel = level;
+        visibleTraders$prevLevel = level;
 
         if(this.offers == null) {
-            this.visibleTraders_NeoForge$lockedOffers = null;
+            this.visibleTraders$lockedOffers = null;
             return;
         }
 
-        if(visibleTraders_NeoForge$cachedTrade == null || this.offers.isEmpty()) {
-            this.visibleTraders_NeoForge$lockedOffers = null;
+        if(visibleTraders$cachedTrade == null || this.offers.isEmpty()) {
+            this.visibleTraders$lockedOffers = null;
             if(!this.offers.isEmpty()) {
-                this.visibleTraders_NeoForge$cachedTrade = this.offers.get(0);
+                this.visibleTraders$cachedTrade = this.offers.get(0);
             }
             return;
         }
 
-        if(visibleTraders_NeoForge$cachedTrade != this.offers.get(0)) {
-            this.visibleTraders_NeoForge$lockedOffers = null;
-            this.visibleTraders_NeoForge$cachedTrade = this.offers.get(0);
+        if(visibleTraders$cachedTrade != this.offers.get(0)) {
+            this.visibleTraders$lockedOffers = null;
+            this.visibleTraders$cachedTrade = this.offers.get(0);
             return;
         }
 
-        if(this.visibleTraders_NeoForge$lockedOffers == null) {
-            this.visibleTraders_NeoForge$lockedOffers = new ArrayList<>();
+        if(this.visibleTraders$lockedOffers == null) {
+            this.visibleTraders$lockedOffers = new ArrayList<>();
         }
 
-        int size = this.visibleTraders_NeoForge$lockedOffers.size();
+        int size = this.visibleTraders$lockedOffers.size();
 
         if(size + level == 5) {
             return;
         }
 
         if(size > 0 && size + level > 5) {
-            this.visibleTraders_NeoForge$lockedOffers.remove(0);
+            this.visibleTraders$lockedOffers.remove(0);
             return;
         }
 
@@ -124,7 +114,7 @@ public abstract class VillagerMixin extends AbstractVillager implements Reputati
             newOffers.add(this.offers.remove(this.offers.size() - 1));
         }
 
-        this.visibleTraders_NeoForge$lockedOffers.add(newOffers);
+        this.visibleTraders$lockedOffers.add(newOffers);
         this.setVillagerData(data);
     }
 
@@ -133,36 +123,36 @@ public abstract class VillagerMixin extends AbstractVillager implements Reputati
         if(this.isClientSide()) return;
         if(!this.level().hasChunk((int) (this.getX() / 16), (int) (this.getZ() / 16))) return;
 
-        visibleTraders_NeoForge$lockedTradesTick();
+        visibleTraders$lockedTradesTick();
     }
 
     @Inject(method = "readAdditionalSaveData", at = @At("TAIL"))
     private void readOfferingLevel(CompoundTag compoundTag, CallbackInfo ci) {
-        if(compoundTag.contains("LockedOffers")) {
-            ListTag lockedOffersTag = compoundTag.getList("LockedOffers", 10); // 10 is for CompoundTag
-            this.visibleTraders_NeoForge$lockedOffers = new ArrayList<>();
+        if(compoundTag.contains(VisibleTraders.LOCKED_OFFERS)) {
+            ListTag lockedOffersTag = compoundTag.getList(VisibleTraders.LOCKED_OFFERS, Tag.TAG_COMPOUND);
+            this.visibleTraders$lockedOffers = new ArrayList<>();
 
             for(int i = 0; i < lockedOffersTag.size(); i++) {
                 CompoundTag offerTag = lockedOffersTag.getCompound(i);
                 MerchantOffers offers = new MerchantOffers(offerTag);
-                this.visibleTraders_NeoForge$lockedOffers.add(offers);
+                this.visibleTraders$lockedOffers.add(offers);
             }
         } else {
-            this.visibleTraders_NeoForge$lockedOffers = new ArrayList<>();
+            this.visibleTraders$lockedOffers = new ArrayList<>();
         }
 
         if(this.offers != null && !this.offers.isEmpty()) {
-            visibleTraders_NeoForge$cachedTrade = this.offers.get(0);
+            visibleTraders$cachedTrade = this.offers.get(0);
         }
     }
 
     @Inject(method = "updateTrades", at = @At("HEAD"), cancellable = true)
     private void preventAdditionalTradesOnRankIncrease(CallbackInfo ci) {
         if(this.offers == null) return;
-        if(this.visibleTraders_NeoForge$lockedOffers == null) return;
-        if(visibleTraders_NeoForge$prevLevel != this.getVillagerData().getLevel()) return;
-        if(!this.visibleTraders_NeoForge$lockedOffers.isEmpty() && this.visibleTraders_NeoForge$lockedOffers.size() + this.getVillagerData().getLevel() > 5) {
-            MerchantOffers newOffers = visibleTraders_NeoForge$lockedOffers.remove(0);
+        if(this.visibleTraders$lockedOffers == null) return;
+        if(visibleTraders$prevLevel != this.getVillagerData().getLevel()) return;
+        if(!this.visibleTraders$lockedOffers.isEmpty() && this.visibleTraders$lockedOffers.size() + this.getVillagerData().getLevel() > 5) {
+            MerchantOffers newOffers = visibleTraders$lockedOffers.remove(0);
             this.offers.addAll(newOffers);
             ci.cancel();
         }
@@ -170,12 +160,12 @@ public abstract class VillagerMixin extends AbstractVillager implements Reputati
 
     @Inject(method = "increaseMerchantCareer", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/npc/Villager;updateTrades()V"))
     private void updateLastKnownLevelOnCareerIncrease(CallbackInfo ci) {
-        this.visibleTraders_NeoForge$prevLevel = this.getVillagerData().getLevel();
+        this.visibleTraders$prevLevel = this.getVillagerData().getLevel();
     }
 
     @Override
     public void visibleTraders$forceTradeGeneration() {
-        for(int i = 0; i < 5; i++) visibleTraders_NeoForge$lockedTradesTick();
+        for(int i = 0; i < 5; i++) visibleTraders$lockedTradesTick();
     }
 
     @Override
@@ -186,12 +176,12 @@ public abstract class VillagerMixin extends AbstractVillager implements Reputati
 
     @Override
     public MerchantOffers visibleTraders$getLockedOffers() {
-        if(this.visibleTraders_NeoForge$lockedOffers == null) return new MerchantOffers();
+        if(this.visibleTraders$lockedOffers == null) return new MerchantOffers();
         MerchantOffers lockedOffers = new MerchantOffers();
-        for(MerchantOffers listOffers : List.copyOf(this.visibleTraders_NeoForge$lockedOffers)) for(MerchantOffer offer : listOffers) {
+        for(MerchantOffers listOffers : List.copyOf(this.visibleTraders$lockedOffers)) for(MerchantOffer offer : listOffers) {
             if(offer.getResult().isEmpty()) {
-                this.visibleTraders_NeoForge$lockedOffers = new ArrayList<>();
-                visibleTraders_NeoForge$visibleTradersLogger.error("detected incomplete trade. Rebuilding locked offers");
+                this.visibleTraders$lockedOffers = new ArrayList<>();
+                VisibleTraders.LOGGER.error("detected incomplete trade. Rebuilding locked offers");
                 return new MerchantOffers();
             }
             lockedOffers.add(offer);
@@ -204,7 +194,7 @@ public abstract class VillagerMixin extends AbstractVillager implements Reputati
         OptionalInt containerID = player.openMenu(new SimpleMenuProvider((syncId, playerInventory, playerx) -> new MerchantMenu(syncId, playerInventory, this), displayName));
 
         if (containerID.isPresent() && player instanceof ServerPlayer serverPlayer) {
-            VisibleTraders.visibleTraders$wrapAndSendMerchantOffers(serverPlayer,this, containerID.getAsInt(), this.getOffers(),
+            VisibleTraders.wrapAndSendMerchantOffers(serverPlayer,this, containerID.getAsInt(), this.getOffers(),
                     level, this.getVillagerXp(), this.showProgressBar(), this.canRestock());
         }
     }

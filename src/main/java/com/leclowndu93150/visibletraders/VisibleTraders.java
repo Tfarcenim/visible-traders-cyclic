@@ -7,15 +7,15 @@ import net.minecraft.world.item.trading.MerchantOffers;
 import net.minecraftforge.fml.common.Mod;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.spongepowered.asm.mixin.Unique;
 
 @Mod("visibletraders")
 public class VisibleTraders {
-    @Unique
+
     public static final Logger LOGGER = LoggerFactory.getLogger("Visible Traders");
+    public static final String LOCKED_OFFERS = "LockedOffers";
 
 
-    public static void visibleTraders$wrapAndSendMerchantOffers(ServerPlayer player,Merchant merchant, int syncId, MerchantOffers merchantOffers, int levelProgress, int experience, boolean leveled, boolean refreshable) {
+    public static void wrapAndSendMerchantOffers(ServerPlayer player, Merchant merchant, int syncId, MerchantOffers merchantOffers, int levelProgress, int experience, boolean leveled, boolean refreshable) {
         if(!(merchant instanceof Villager villager)) {
             player.sendMerchantOffers(syncId, merchantOffers, levelProgress, experience, leveled, refreshable);
             return;

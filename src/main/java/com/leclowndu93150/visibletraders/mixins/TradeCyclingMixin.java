@@ -1,6 +1,7 @@
 package com.leclowndu93150.visibletraders.mixins;
 
 import com.leclowndu93150.visibletraders.VillagerDuck;
+import com.leclowndu93150.visibletraders.VisibleTraders;
 import com.llamalad7.mixinextras.sugar.Local;
 import de.maxhenkel.tradecycling.TradeCyclingMod;
 import net.minecraft.server.level.ServerPlayer;
@@ -40,8 +41,8 @@ public class TradeCyclingMixin {
     )
     private static void redirectSendOffers(ServerPlayer player, int containerId, MerchantOffers offers,
                                            int level, int xp, boolean showProgress, boolean canRestock) {
-        if (player instanceof ServerPlayerDuck serverPlayerDuck && capturedVillager != null) {
-            serverPlayerDuck.visibleTraders$wrapAndSendMerchantOffers(capturedVillager, containerId, offers, level, xp, showProgress, canRestock);
+        if (capturedVillager != null) {
+            VisibleTraders.wrapAndSendMerchantOffers(player,capturedVillager, containerId, offers, level, xp, showProgress, canRestock);
         } else {
             player.sendMerchantOffers(containerId, offers, level, xp, showProgress, canRestock);
         }

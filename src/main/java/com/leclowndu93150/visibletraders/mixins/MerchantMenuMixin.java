@@ -26,13 +26,13 @@ public abstract class MerchantMenuMixin implements MerchantMenuDuck {
     @Shadow public abstract MerchantOffers getOffers();
 
     @Unique
-    private int visibleTraders_NeoForge$unlockedTradeCount = 0;
+    private int visibleTraders$unlockedTradeCount = 0;
 
     @Inject(method = "setMerchantLevel", at = @At("TAIL"))
     private void readUnlockedTradeCountFromLevel(int i, CallbackInfo ci) {
-        visibleTraders_NeoForge$unlockedTradeCount = i >> 8;
+        visibleTraders$unlockedTradeCount = i >> 8;
         if(this.trader instanceof ClientSideMerchantDuck duck) {
-            List<MerchantOffer> list = getOffers().subList(0, visibleTraders_NeoForge$unlockedTradeCount);
+            List<MerchantOffer> list = getOffers().subList(0, visibleTraders$unlockedTradeCount);
             MerchantOffers offers = new MerchantOffers();
             offers.addAll(list);
             duck.visibleTraders$setClientUnlockedTrades(offers);
@@ -43,7 +43,7 @@ public abstract class MerchantMenuMixin implements MerchantMenuDuck {
 
     @Override
     public boolean visibleTraders$shouldAllowTrade(int i) {
-        if(visibleTraders_NeoForge$unlockedTradeCount == 0) return true;
-        return i <= visibleTraders_NeoForge$unlockedTradeCount -1;
+        if(visibleTraders$unlockedTradeCount == 0) return true;
+        return i <= visibleTraders$unlockedTradeCount -1;
     }
 }
